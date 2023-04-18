@@ -63,11 +63,11 @@ function safe_fetch {
   exit 1
 }
 
-#env TF_CPP_MIN_LOG_LEVEL=1
+env TF_CPP_MIN_LOG_LEVEL=1
 
-#apt update
-#pip install -q torch==1.13.1+cu116 torchvision==0.14.1+cu116 torchaudio==0.13.1 torchtext==0.14.1 torchdata==0.5.1 --extra-index-url https://download.pytorch.org/whl/cu116 -U
-#pip install -q xformers==0.0.16 triton==2.0.0 -U
+sudo apt update
+pip install -q torch==1.13.1+cu116 torchvision==0.14.1+cu116 torchaudio==0.13.1 torchtext==0.14.1 torchdata==0.5.1 --extra-index-url https://download.pytorch.org/whl/cu116 -U
+pip install -q xformers==0.0.16 triton==2.0.0 -U
 
 BASEPATH=/home/lang
 safe_git https://github.com/camenduru/stable-diffusion-webui $BASEPATH/stable-diffusion-webui v2.1
@@ -120,11 +120,11 @@ safe_fetch https://huggingface.co/ckpt/ControlNet/resolve/main/t2iadapter_canny_
 
 safe_fetch https://huggingface.co/ckpt/sd15/resolve/main/v1-5-pruned-emaonly.ckpt $BASEPATH/stable-diffusion-webui/models/Stable-diffusion v1-5-pruned-emaonly.ckpt
 
-sed -i -e '''/    prepare_environment()/a\    os.system\(f\"""sed -i -e ''\"s/dict()))/dict())).cuda()/g\"'' $BASEPATH/stable-diffusion-webui/repositories/stable-diffusion-stability-ai/ldm/util.py""")''' $BASEPATH/stable-diffusion-webui/launch.py
+sed -i -e """/    prepare_environment()/a\    os.system\(f\'''sed -i -e ''\"s/dict()))/dict())).cuda()/g\"'' $BASEPATH/stable-diffusion-webui/repositories/stable-diffusion-stability-ai/ldm/util.py''')""" $BASEPATH/stable-diffusion-webui/launch.py
 sed -i -e 's/fastapi==0.90.1/fastapi==0.89.1/g' $BASEPATH/stable-diffusion-webui/requirements_versions.txt
 
-mkdir /content/stable-diffusion-webui/extensions/deforum-for-automatic1111-webui/models
+mkdir $BASEPATH/stable-diffusion-webui/extensions/deforum-for-automatic1111-webui/models
 
-sed -i -e 's/\"sd_model_checkpoint\"\,/\"sd_model_checkpoint\,sd_vae\,CLIP_stop_at_last_layers\"\,/g' /content/stable-diffusion-webui/modules/shared.py
+sed -i -e 's/\"sd_model_checkpoint\"\,/\"sd_model_checkpoint\,sd_vae\,CLIP_stop_at_last_layers\"\,/g' $BASEPATH/stable-diffusion-webui/modules/shared.py
 
-python launch.py --listen --xformers --enable-insecure-extension-access --theme dark --gradio-queue --multiple
+python3 launch.py --listen --xformers --enable-insecure-extension-access --theme dark --gradio-queue --multiple
