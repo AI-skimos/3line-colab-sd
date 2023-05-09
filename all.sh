@@ -98,6 +98,7 @@ function sed_for {
         sed -i -e 's/    start()/    #start()/g' $base_dir/launch.py
     elif [[ $option == "run" ]]; then
         sed -i -e """/    prepare_environment()/a\    os.system\(f\'''sed -i -e ''\"s/dict()))/dict())).cuda()/g\"'' $base_dir/repositories/stable-diffusion-stability-ai/ldm/util.py''')""" $base_dir/launch.py
+        sed -i -e 's/\"sd_model_checkpoint\"\,/\"sd_model_checkpoint\,sd_vae\,CLIP_stop_at_last_layers\"\,/g' $base_dir/modules/shared.py
     else
         echo "Error: Invalid argument '$option'"
         echo "Usage: sed_for <installation|run> <base_dir>"
@@ -194,8 +195,6 @@ function run {
     #Make sure CLIP folder exists and downloads the model if not present
     mkdir -p $BASEPATH/models/CLIP
     safe_fetch https://openaipublic.azureedge.net/clip/models/b8cca3fd41ae0c99ba7e8951adf17d267cdb84cd88be6f7c2e0eca1737a03836/ViT-L-14.pt $BASEPATH/models/CLIP ViT-L-14.pt
-
-    sed -i -e 's/\"sd_model_checkpoint\"\,/\"sd_model_checkpoint\,sd_vae\,CLIP_stop_at_last_layers\"\,/g' $BASEPATH/modules/shared.py
 
     python launch.py --listen --opt-sdp-attention --enable-insecure-extension-access --theme dark --gradio-queue --clip-models-path $BASEPATH/models/CLIP --multiple
 }
