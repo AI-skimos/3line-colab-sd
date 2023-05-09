@@ -157,9 +157,9 @@ function install {
 
     #Download Controlnet Models
     safe_fetch https://huggingface.co/ckpt/ControlNet-v1-1/resolve/main/control_v11f1e_sd15_tile_fp16.safetensors $BASEPATH/extensions/sd-webui-controlnet/models control_v11f1e_sd15_tile_fp16.safetensors
-    safe_fetch https://huggingface.co/ckpt/ControlNet-v1-1/resolve/main/control_v11p_sd15_canny_fp16.safetensors $BASEPATH/extensions/sd-webui-controlnet/models control_v11p_sd15_canny_fp16.safetensors
-    safe_fetch https://huggingface.co/ckpt/ControlNet-v1-1/resolve/main/control_v11p_sd15_openpose_fp16.safetensors $BASEPATH/extensions/sd-webui-controlnet/models control_v11p_sd15_openpose_fp16.safetensors
-    safe_fetch https://huggingface.co/ckpt/ControlNet-v1-1/resolve/main/control_v11p_sd15_seg_fp16.safetensors $BASEPATH/extensions/sd-webui-controlnet/models control_v11p_sd15_seg_fp16.safetensors
+    #safe_fetch https://huggingface.co/ckpt/ControlNet-v1-1/resolve/main/control_v11p_sd15_canny_fp16.safetensors $BASEPATH/extensions/sd-webui-controlnet/models control_v11p_sd15_canny_fp16.safetensors
+    #safe_fetch https://huggingface.co/ckpt/ControlNet-v1-1/resolve/main/control_v11p_sd15_openpose_fp16.safetensors $BASEPATH/extensions/sd-webui-controlnet/models control_v11p_sd15_openpose_fp16.safetensors
+    #safe_fetch https://huggingface.co/ckpt/ControlNet-v1-1/resolve/main/control_v11p_sd15_seg_fp16.safetensors $BASEPATH/extensions/sd-webui-controlnet/models control_v11p_sd15_seg_fp16.safetensors
 
     #Download Model & VAE
     safe_fetch https://huggingface.co/XpucT/Deliberate/resolve/main/Deliberate_v2.safetensors $BASEPATH/models/Stable-diffusion Deliberate_v2.safetensors
@@ -195,7 +195,8 @@ function run {
     #Make sure CLIP folder exists and downloads the model if not present
     mkdir -p $BASEPATH/models/CLIP
     safe_fetch https://openaipublic.azureedge.net/clip/models/b8cca3fd41ae0c99ba7e8951adf17d267cdb84cd88be6f7c2e0eca1737a03836/ViT-L-14.pt $BASEPATH/models/CLIP ViT-L-14.pt
-
+ 
+    cd $BASEPATH
     python launch.py --listen --opt-sdp-attention --enable-insecure-extension-access --theme dark --gradio-queue --clip-models-path $BASEPATH/models/CLIP --multiple
 }
 
