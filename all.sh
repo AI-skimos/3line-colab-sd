@@ -79,7 +79,7 @@ function reset_repos {
     local base_path="$1"
     extionsion_path=$base_path/extensions
     cd $base_path && git reset --hard && git pull
-    cd $base_path/extensions && find . -maxdepth 1 -type d \( ! -name . \) -exec bash -c "cd '{}' && git reset --hard && git pull" \;
+    cd $base_path/extensions && find . -maxdepth 1 -type d \( ! -name . \) -exec bash -c "cd '{}' && pwd && git reset --hard && git pull" \;
 }
 
 function sed_for {
