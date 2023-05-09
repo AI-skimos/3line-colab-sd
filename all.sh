@@ -152,7 +152,7 @@ function install {
     reset_repos $BASEPATH
 
     #Download Controlnet Models
-    safe_fetch https://huggingface.co/ckpt/ControlNet-v1-1/resolve/main/control_v11u_sd15_tile_fp16.safetensor $BASEPATH/extensions/sd-webui-controlnet/models control_v11u_sd15_tile_fp16.safetensor
+    safe_fetch https://huggingface.co/ckpt/ControlNet-v1-1/resolve/main/control_v11f1e_sd15_tile_fp16.safetensors $BASEPATH/extensions/sd-webui-controlnet/models control_v11f1e_sd15_tile_fp16.safetensors
     safe_fetch https://huggingface.co/ckpt/ControlNet-v1-1/resolve/main/control_v11p_sd15_canny_fp16.safetensors $BASEPATH/extensions/sd-webui-controlnet/models control_v11p_sd15_canny_fp16.safetensors
     safe_fetch https://huggingface.co/ckpt/ControlNet-v1-1/resolve/main/control_v11p_sd15_openpose_fp16.safetensors $BASEPATH/extensions/sd-webui-controlnet/models control_v11p_sd15_openpose_fp16.safetensors
     safe_fetch https://huggingface.co/ckpt/ControlNet-v1-1/resolve/main/control_v11p_sd15_seg_fp16.safetensors $BASEPATH/extensions/sd-webui-controlnet/models control_v11p_sd15_seg_fp16.safetensors
