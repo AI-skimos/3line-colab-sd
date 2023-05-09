@@ -14,12 +14,12 @@ function safe_git {
 
   if [ -d "$local_folder/.git" ] && git -C "$local_folder" rev-parse &> /dev/null; then
     echo "INFO: Repo $local_folder is valid, performing update."
-    SKIP_POST_CHECKOUT=1 git -C "$local_folder" pull && return 0
+    git -c core.hooksPath=/dev/null -C "$local_folder" pull && return 0
   else
     echo "INFO: Repo $local_folder is not valid or does not exist, cloning."
     rm -rf "$local_folder"
     for i in $(seq $retry_count); do
-      SKIP_POST_CHECKOUT=1 git clone ${branch_name:+-b "$branch_name"} "$repo_url" "$local_folder" && return 0
+      git -c core.hooksPath=/dev/null clone ${branch_name:+-b "$branch_name"} "$repo_url" "$local_folder" && return 0
       echo "NOTICE: git clone failed, retrying in 5 seconds (attempt $i of $retry_count)..."
       sleep 5  # Wait for 5 seconds before retrying
       rm -rf "$local_folder"
@@ -77,7 +77,7 @@ function reset_repos {
         return 1
     fi
     local base_path="$1"
-    cd $base_path && find . -maxdepth 1 -type d \( ! -name . \) -exec bash -c "cd '{}' && git reset --hard && git pull" \;
+    cd $base_path && find . -maxdepth 1 -type d \( ! -name . \) -exec bash -c "cd '{}' && git reset --hard && git -c core.hooksPath=/dev/null pull" \;
 }
 
 function sed_for {
