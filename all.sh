@@ -77,8 +77,10 @@ function reset_repos {
         return 1
     fi
     local base_path="$1"
-    cd $base_path && git reset --hard && git pull
-    cd $base_path/extensions && find . -maxdepth 1 -type d \( ! -name . \) -exec bash -c "cd '{}' && pwd && git reset --hard && git pull" \;
+    #cd $base_path && pwd && git reset --hard && git pull
+    git -C $base_path reset --hard && tail $base_path/launch.py
+    git -C $base_path/repositories/stable-diffusion-stability-ai reset --hard
+    cd $base_path/extensions && find . -maxdepth 1 -type d \( ! -name . \) -exec bash -c "echo '{}' && git -C '{}' reset --hard && git pull"
 }
 
 function sed_for {
