@@ -197,5 +197,5 @@ function run {
     python launch.py --listen --xformers --enable-insecure-extension-access --theme dark --gradio-queue --clip-models-path $BASEPATH/models/CLIP --multiple
 }
 
-installation
+install
 run
