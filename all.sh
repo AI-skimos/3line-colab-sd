@@ -187,7 +187,7 @@ function run {
     unionfs-fuse $BASEPATH/extensions/sd-webui-additional-networks/models/lora=RW:$BASEPATH/models/Lora=RW:/content/lora=RW /content/fused-lora
 
     #Healthcheck and update all repos
-    reset_repos $BATHPATH
+    reset_repos $BASEPATH
 
     #Prepare for running
     sed_for run $BASEPATH
