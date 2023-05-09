@@ -1,7 +1,7 @@
 #/bin/bash
 
-env PYTHONDONTWRITEBYTECODE=1
-env TF_CPP_MIN_LOG_LEVEL=1
+env PYTHONDONTWRITEBYTECODE=1 &>/dev/null
+env TF_CPP_MIN_LOG_LEVEL=1 &>/dev/null
 BASEPATH=/content/drive/MyDrive/SD
 
 function safe_git {
@@ -117,7 +117,7 @@ function install_perf_tools {
     safe_fetch https://launchpad.net/ubuntu/+source/google-perftools/2.5-2.2ubuntu3/+build/14795286/+files/libgoogle-perftools4_2.5-2.2ubuntu3_amd64.deb /tmp/packages libgoogle-perftools4_2.5-2.2ubuntu3_amd64.deb
     apt install -qq libunwind8-dev
     dpkg -i /tmp//packages/*.deb
-    env LD_PRELOAD=libtcmalloc.so
+    env LD_PRELOAD=libtcmalloc.so &>/dev/null
 }
 
 function install {
