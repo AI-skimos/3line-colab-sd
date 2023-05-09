@@ -1,5 +1,9 @@
 #/bin/bash
 
+env PYTHONDONTWRITEBYTECODE=1
+env TF_CPP_MIN_LOG_LEVEL=1
+BASEPATH=/content/drive/MyDrive/SD
+
 function safe_git {
   if [ "$#" -lt 2 ] || [ "$#" -gt 3 ]; then
     echo "Usage: safe_git <repo_url> <local_folder> [<branch_name>]"
@@ -63,68 +67,135 @@ function safe_fetch {
   exit 1
 }
 
-env TF_CPP_MIN_LOG_LEVEL=1
+function reset_repos {
+    if [ "$#" -lt 1 ]; then
+        echo "Usage: reset_repos <base_dir>"
+        return 1
+    fi
+    if [ ! -d "$1" ]; then
+        echo "Error: The base_dir passed is not a valid path"
+        return 1
+    fi
+    local base_path="$1"
+    cd $base_path && find . -maxdepth 1 -type d \( ! -name . \) -exec bash -c "cd '{}' && git reset --hard && git pull" \;
+}
 
-sudo apt update
-pip install -q torch==1.13.1+cu116 torchvision==0.14.1+cu116 torchaudio==0.13.1 torchtext==0.14.1 torchdata==0.5.1 --extra-index-url https://download.pytorch.org/whl/cu116 -U
-pip install -q xformers==0.0.16 triton==2.0.0 -U
+function sed_for {
+    if [ "$#" -lt 2 ]; then
+        echo "Usage: sed_for <installation|run> <base_dir>"
+        return 1
+    fi
+    local option=$1
+    local base_dir=$2
+    if [ ! -d "$base_dir" ]; then
+        echo "Error: '$base_dir' is not a valid directory"
+        return 1
+    fi
+    if [[ $option == "installation" ]]; then
+        sed -i -e 's/    start()/    #start()/g' $base_dir/launch.py
+    elif [[ $option == "run" ]]; then
+        sed -i -e """/    prepare_environment()/a\    os.system\(f\'''sed -i -e ''\"s/dict()))/dict())).cuda()/g\"'' $base_dir/repositories/stable-diffusion-stability-ai/ldm/util.py''')""" $base_dir/launch.py
+    else
+        echo "Error: Invalid argument '$option'"
+        echo "Usage: sed_for <installation|run> <base_dir>"
+        return 1
+    fi
+    sed -i -e 's/checkout {commithash}/checkout --force {commithash}/g' $base_dir/launch.py
+}
 
-BASEPATH=/home/lang
-safe_git https://github.com/camenduru/stable-diffusion-webui $BASEPATH/stable-diffusion-webui v2.1
-safe_git https://huggingface.co/embed/negative $BASEPATH/stable-diffusion-webui/embeddings/negative
-safe_git https://huggingface.co/embed/lora $BASEPATH/stable-diffusion-webui/models/Lora/positive
-safe_fetch https://huggingface.co/embed/upscale/resolve/main/4x-UltraSharp.pth $BASEPATH/stable-diffusion-webui/models/ESRGAN 4x-UltraSharp.pth
-safe_fetch https://raw.githubusercontent.com/camenduru/stable-diffusion-webui-scripts/main/run_n_times.py $BASEPATH/stable-diffusion-webui/scripts run_n_times.py
-safe_git https://github.com/deforum-art/deforum-for-automatic1111-webui $BASEPATH/stable-diffusion-webui/extensions/deforum-for-automatic1111-webui
-safe_git https://github.com/camenduru/stable-diffusion-webui-images-browser $BASEPATH/stable-diffusion-webui/extensions/stable-diffusion-webui-images-browser
-safe_git https://github.com/camenduru/stable-diffusion-webui-huggingface $BASEPATH/stable-diffusion-webui/extensions/stable-diffusion-webui-huggingface
-safe_git https://github.com/camenduru/sd-civitai-browser $BASEPATH/stable-diffusion-webui/extensions/sd-civitai-browser
-safe_git https://github.com/kohya-ss/sd-webui-additional-networks $BASEPATH/stable-diffusion-webui/extensions/sd-webui-additional-networks
-safe_git https://github.com/Mikubill/sd-webui-controlnet $BASEPATH/stable-diffusion-webui/extensions/sd-webui-controlnet
-safe_git https://github.com/camenduru/openpose-editor $BASEPATH/stable-diffusion-webui/extensions/openpose-editor
-safe_git https://github.com/jexom/sd-webui-depth-lib $BASEPATH/stable-diffusion-webui/extensions/sd-webui-depth-lib
-safe_git https://github.com/hnmr293/posex $BASEPATH/stable-diffusion-webui/extensions/posex
-safe_git https://github.com/camenduru/sd-webui-tunnels $BASEPATH/stable-diffusion-webui/extensions/sd-webui-tunnels
-safe_git https://github.com/etherealxx/batchlinks-webui $BASEPATH/stable-diffusion-webui/extensions/batchlinks-webui
-safe_git https://github.com/camenduru/stable-diffusion-webui-catppuccin $BASEPATH/stable-diffusion-webui/extensions/stable-diffusion-webui-catppuccin
-safe_git https://github.com/KohakuBlueleaf/a1111-sd-webui-locon $BASEPATH/stable-diffusion-webui/extensions/a1111-sd-webui-locon
-safe_git https://github.com/AUTOMATIC1111/stable-diffusion-webui-rembg $BASEPATH/stable-diffusion-webui/extensions/stable-diffusion-webui-rembg
-safe_git https://github.com/ashen-sensored/stable-diffusion-webui-two-shot $BASEPATH/stable-diffusion-webui/extensions/stable-diffusion-webui-two-shot
-safe_git https://github.com/camenduru/sd_webui_stealth_pnginfo $BASEPATH/stable-diffusion-webui/extensions/sd_webui_stealth_pnginfo
-cd $BASEPATH/stable-diffusion-webui
-git reset --hard
+#libgoogle-perftools-dev	2.5-2.2ubuntu3
+#google-perftools	2.5-2.2ubuntu3
+#libtcmalloc-minimal4	2.5-2.2ubuntu3
+#libgoogle-perftools4	2.5-2.2ubuntu3
+function install_perf_tools {
+    #dpkg-query -W "$package_name" 2>/dev/null | grep -q "^$package_name $package_version"
+    mkdir /tmp/packages 
+    safe_fetch http://launchpadlibrarian.net/367274644/libgoogle-perftools-dev_2.5-2.2ubuntu3_amd64.deb /tmp/packages  libgoogle-perftools-dev_2.5-2.2ubuntu3_amd64.deb
+    safe_fetch https://launchpad.net/ubuntu/+source/google-perftools/2.5-2.2ubuntu3/+build/14795286/+files/google-perftools_2.5-2.2ubuntu3_all.deb /tmp/packages google-perftools_2.5-2.2ubuntu3_all.deb
+    safe_fetch https://launchpad.net/ubuntu/+source/google-perftools/2.5-2.2ubuntu3/+build/14795286/+files/libtcmalloc-minimal4_2.5-2.2ubuntu3_amd64.deb /tmp/packages libtcmalloc-minimal4_2.5-2.2ubuntu3_amd64.deb
+    safe_fetch https://launchpad.net/ubuntu/+source/google-perftools/2.5-2.2ubuntu3/+build/14795286/+files/libgoogle-perftools4_2.5-2.2ubuntu3_amd64.deb /tmp/packages libgoogle-perftools4_2.5-2.2ubuntu3_amd64.deb
+    apt install -qq libunwind8-dev
+    dpkg -i /tmp//packages/*.deb
+    env LD_PRELOAD=libtcmalloc.so
+}
 
-safe_fetch https://huggingface.co/ckpt/ControlNet/resolve/main/control_canny-fp16.safetensors $BASEPATH/stable-diffusion-webui/extensions/sd-webui-controlnet/models control_canny-fp16.safetensors
-safe_fetch https://huggingface.co/ckpt/ControlNet/resolve/main/control_depth-fp16.safetensors $BASEPATH/stable-diffusion-webui/extensions/sd-webui-controlnet/models control_depth-fp16.safetensors
-safe_fetch https://huggingface.co/ckpt/ControlNet/resolve/main/control_hed-fp16.safetensors $BASEPATH/stable-diffusion-webui/extensions/sd-webui-controlnet/models control_hed-fp16.safetensors
-safe_fetch https://huggingface.co/ckpt/ControlNet/resolve/main/control_mlsd-fp16.safetensors $BASEPATH/stable-diffusion-webui/extensions/sd-webui-controlnet/models control_mlsd-fp16.safetensors
-safe_fetch https://huggingface.co/ckpt/ControlNet/resolve/main/control_normal-fp16.safetensors $BASEPATH/stable-diffusion-webui/extensions/sd-webui-controlnet/models control_normal-fp16.safetensors
-safe_fetch https://huggingface.co/ckpt/ControlNet/resolve/main/control_openpose-fp16.safetensors $BASEPATH/stable-diffusion-webui/extensions/sd-webui-controlnet/models control_openpose-fp16.safetensors
-safe_fetch https://huggingface.co/ckpt/ControlNet/resolve/main/control_scribble-fp16.safetensors $BASEPATH/stable-diffusion-webui/extensions/sd-webui-controlnet/models control_scribble-fp16.safetensors
-safe_fetch https://huggingface.co/ckpt/ControlNet/resolve/main/control_seg-fp16.safetensors $BASEPATH/stable-diffusion-webui/extensions/sd-webui-controlnet/models control_seg-fp16.safetensors
-safe_fetch https://huggingface.co/ckpt/ControlNet/resolve/main/hand_pose_model.pth $BASEPATH/stable-diffusion-webui/extensions/sd-webui-controlnet/annotator/openpose hand_pose_model.pth
-safe_fetch https://huggingface.co/ckpt/ControlNet/resolve/main/body_pose_model.pth $BASEPATH/stable-diffusion-webui/extensions/sd-webui-controlnet/annotator/openpose ody_pose_model.pth
-safe_fetch https://huggingface.co/ckpt/ControlNet/resolve/main/dpt_hybrid-midas-501f0c75.pt $BASEPATH/stable-diffusion-webui/extensions/sd-webui-controlnet/annotator/midas dpt_hybrid-midas-501f0c75.pt
-safe_fetch https://huggingface.co/ckpt/ControlNet/resolve/main/mlsd_large_512_fp32.pth $BASEPATH/stable-diffusion-webui/extensions/sd-webui-controlnet/annotator/mlsd mlsd_large_512_fp32.pth
-safe_fetch https://huggingface.co/ckpt/ControlNet/resolve/main/mlsd_tiny_512_fp32.pth $BASEPATH/stable-diffusion-webui/extensions/sd-webui-controlnet/annotator/mlsd mlsd_tiny_512_fp32.pth
-safe_fetch https://huggingface.co/ckpt/ControlNet/resolve/main/network-bsds500.pth $BASEPATH/stable-diffusion-webui/extensions/sd-webui-controlnet/annotator/hed network-bsds500.pth
-safe_fetch https://huggingface.co/ckpt/ControlNet/resolve/main/upernet_global_small.pth $BASEPATH/stable-diffusion-webui/extensions/sd-webui-controlnet/annotator/uniformer upernet_global_small.pth
-safe_fetch https://huggingface.co/ckpt/ControlNet/resolve/main/t2iadapter_style_sd14v1.pth $BASEPATH/stable-diffusion-webui/extensions/sd-webui-controlnet/models t2iadapter_style_sd14v1.pth
-safe_fetch https://huggingface.co/ckpt/ControlNet/resolve/main/t2iadapter_sketch_sd14v1.pth $BASEPATH/stable-diffusion-webui/extensions/sd-webui-controlnet/models t2iadapter_sketch_sd14v1.pth
-safe_fetch https://huggingface.co/ckpt/ControlNet/resolve/main/t2iadapter_seg_sd14v1.pth $BASEPATH/stable-diffusion-webui/extensions/sd-webui-controlnet/models t2iadapter_seg_sd14v1.pth
-safe_fetch https://huggingface.co/ckpt/ControlNet/resolve/main/t2iadapter_openpose_sd14v1.pth $BASEPATH/stable-diffusion-webui/extensions/sd-webui-controlnet/models t2iadapter_openpose_sd14v1.pth
-safe_fetch https://huggingface.co/ckpt/ControlNet/resolve/main/t2iadapter_keypose_sd14v1.pth $BASEPATH/stable-diffusion-webui/extensions/sd-webui-controlnet/models t2iadapter_keypose_sd14v1.pth
-safe_fetch https://huggingface.co/ckpt/ControlNet/resolve/main/t2iadapter_depth_sd14v1.pth $BASEPATH/stable-diffusion-webui/extensions/sd-webui-controlnet/models t2iadapter_depth_sd14v1.pth
-safe_fetch https://huggingface.co/ckpt/ControlNet/resolve/main/t2iadapter_color_sd14v1.pth $BASEPATH/stable-diffusion-webui/extensions/sd-webui-controlnet/models t2iadapter_color_sd14v1.pth
-safe_fetch https://huggingface.co/ckpt/ControlNet/resolve/main/t2iadapter_canny_sd14v1.pth $BASEPATH/stable-diffusion-webui/extensions/sd-webui-controlnet/models t2iadapter_canny_sd14v1.pth
+function install {
+    #Update packages
+    apt -y update -qq && apt -y install -qq unionfs-fuse libcairo2-dev pkg-config python3-dev
 
-safe_fetch https://huggingface.co/ckpt/sd15/resolve/main/v1-5-pruned-emaonly.ckpt $BASEPATH/stable-diffusion-webui/models/Stable-diffusion v1-5-pruned-emaonly.ckpt
+    #Prepare runtime
+    safe_git https://github.com/camenduru/stable-diffusion-webui $BASEPATH v2.1
+    safe_git https://huggingface.co/embed/negative $BASEPATH/embeddings/negative
+    safe_git https://huggingface.co/embed/lora $BASEPATH/models/Lora/positive
+    safe_fetch https://huggingface.co/embed/upscale/resolve/main/4x-UltraSharp.pth $BASEPATH/models/ESRGAN 4x-UltraSharp.pth
+    safe_fetch https://raw.githubusercontent.com/camenduru/stable-diffusion-webui-scripts/main/run_n_times.py $BASEPATH/scripts run_n_times.py
+    safe_git https://github.com/deforum-art/deforum-for-automatic1111-webui $BASEPATH/extensions/deforum-for-automatic1111-webui
+    safe_git https://github.com/camenduru/stable-diffusion-webui-images-browser $BASEPATH/extensions/stable-diffusion-webui-images-browser
+    safe_git https://github.com/camenduru/stable-diffusion-webui-huggingface $BASEPATH/extensions/stable-diffusion-webui-huggingface
+    safe_git https://github.com/camenduru/sd-civitai-browser $BASEPATH/extensions/sd-civitai-browser
+    safe_git https://github.com/kohya-ss/sd-webui-additional-networks $BASEPATH/extensions/sd-webui-additional-networks
+    safe_git https://github.com/Mikubill/sd-webui-controlnet $BASEPATH/extensions/sd-webui-controlnet
+    safe_git https://github.com/fkunn1326/openpose-editor $BASEPATH/extensions/openpose-editor
+    safe_git https://github.com/jexom/sd-webui-depth-lib $BASEPATH/extensions/sd-webui-depth-lib
+    safe_git https://github.com/hnmr293/posex $BASEPATH/extensions/posex
+    safe_git https://github.com/nonnonstop/sd-webui-3d-open-pose-editor $BASEPATH/extensions/sd-webui-3d-open-pose-editor
+    safe_git https://github.com/camenduru/sd-webui-tunnels $BASEPATH/extensions/sd-webui-tunnels
+    safe_git https://github.com/etherealxx/batchlinks-webui $BASEPATH/extensions/batchlinks-webui
+    safe_git https://github.com/camenduru/stable-diffusion-webui-catppuccin $BASEPATH/extensions/stable-diffusion-webui-catppuccin
+    safe_git https://github.com/KohakuBlueleaf/a1111-sd-webui-locon $BASEPATH/extensions/a1111-sd-webui-locon
+    safe_git https://github.com/AUTOMATIC1111/stable-diffusion-webui-rembg $BASEPATH/extensions/stable-diffusion-webui-rembg
+    safe_git https://github.com/ashen-sensored/stable-diffusion-webui-two-shot $BASEPATH/extensions/stable-diffusion-webui-two-shot
+    safe_git https://github.com/camenduru/sd_webui_stealth_pnginfo $BASEPATH/extensions/sd_webui_stealth_pnginfo
+    safe_git https://github.com/thomasasfk/sd-webui-aspect-ratio-helper  $BASEPATH/extensions/sd-webui-aspect-ratio-helper
+    safe_git https://github.com/dtlnor/stable-diffusion-webui-localization-zh_CN $BASEPATH/extensions/stable-diffusion-webui-localization-zh_CN
+    safe_git https://github.com/AI-skimos/sd-webui-prompt-sr-range $BASEPATH/extensions/sd-webui-prompt-sr-range
+    reset_repos $BASEPATH
 
-sed -i -e """/    prepare_environment()/a\    os.system\(f\'''sed -i -e ''\"s/dict()))/dict())).cuda()/g\"'' $BASEPATH/stable-diffusion-webui/repositories/stable-diffusion-stability-ai/ldm/util.py''')""" $BASEPATH/stable-diffusion-webui/launch.py
-sed -i -e 's/fastapi==0.90.1/fastapi==0.89.1/g' $BASEPATH/stable-diffusion-webui/requirements_versions.txt
+    #Download Controlnet Models
+    safe_fetch https://huggingface.co/ckpt/ControlNet-v1-1/resolve/main/control_v11u_sd15_tile_fp16.safetensor $BASEPATH/extensions/sd-webui-controlnet/models control_v11u_sd15_tile_fp16.safetensor
+    safe_fetch https://huggingface.co/ckpt/ControlNet-v1-1/resolve/main/control_v11p_sd15_canny_fp16.safetensors $BASEPATH/extensions/sd-webui-controlnet/models control_v11p_sd15_canny_fp16.safetensors
+    safe_fetch https://huggingface.co/ckpt/ControlNet-v1-1/resolve/main/control_v11p_sd15_openpose_fp16.safetensors $BASEPATH/extensions/sd-webui-controlnet/models control_v11p_sd15_openpose_fp16.safetensors
+    safe_fetch https://huggingface.co/ckpt/ControlNet-v1-1/resolve/main/control_v11p_sd15_seg_fp16.safetensors $BASEPATH/extensions/sd-webui-controlnet/models control_v11p_sd15_seg_fp16.safetensors
 
-mkdir $BASEPATH/stable-diffusion-webui/extensions/deforum-for-automatic1111-webui/models
+    #Download Model & VAE
+    safe_fetch https://huggingface.co/XpucT/Deliberate/resolve/main/Deliberate_v2.safetensors $BASEPATH/models/Stable-diffusion Deliberate_v2.safetensors
+    safe_fetch https://huggingface.co/Yukihime256/840000/resolve/main/vae-ft-mse-840000-ema-pruned.ckpt $BASEPATH/models/models/VAE vae-ft-mse-840000-ema-pruned.ckpt
 
-sed -i -e 's/\"sd_model_checkpoint\"\,/\"sd_model_checkpoint\,sd_vae\,CLIP_stop_at_last_layers\"\,/g' $BASEPATH/stable-diffusion-webui/modules/shared.py
+    #Install Dependencies
+    sed_for installation
+    cd $BASEPATH && python launch.py --skip-torch-cuda-test && echo "Installation Completed" > $BASEPATH/.install_status
+}
 
-python3 launch.py --listen --xformers --enable-insecure-extension-access --theme dark --gradio-queue --multiple
+function run {
+    #Install google perf tools
+    install_perf_tools
+
+    #Install pip dependencies
+    pip install -q torch==2.0.0+cu118 torchvision==0.15.1+cu118 torchaudio==2.0.1+cu118 torchtext==0.15.1 torchdata==0.6.0 --extra-index-url https://download.pytorch.org/whl/cu118 -U
+    pip install -q xformers==0.0.18 triton==2.0.0 -U
+
+    #Prepare drive fusion MOVE THIS TOLATER
+    mkdir /content/fused-models
+    mkdir /content/models
+    mkdir /content/fused-lora
+    mkdir /content/lora
+    unionfs-fuse $BASEPATH/models/Stable-diffusion=RW:/content/models=RW /content/fused-models
+    unionfs-fuse $BASEPATH/extensions/sd-$blasphemy-additional-networks/models/lora=RW:$BASEPATH/models/Lora=RW:/content/lora=RW /content/fused-lora
+
+    #Healthcheck and update all repos
+    reset_repos $BATHPATH
+
+    #Prepare for running
+    sed_for run
+
+    #Make sure CLIP folder exists and downloads the model if not present
+    mkdir -p $BASEPATH/models/CLIP
+    safe_fetch https://openaipublic.azureedge.net/clip/models/b8cca3fd41ae0c99ba7e8951adf17d267cdb84cd88be6f7c2e0eca1737a03836/ViT-L-14.pt $BASEPATH/models/CLIP ViT-L-14.pt
+
+    sed -i -e 's/\"sd_model_checkpoint\"\,/\"sd_model_checkpoint\,sd_vae\,CLIP_stop_at_last_layers\"\,/g' $BASEPATH/modules/shared.py
+
+    python launch.py --listen --xformers --enable-insecure-extension-access --theme dark --gradio-queue --clip-models-path $BASEPATH/models/CLIP --multiple
+}
+
+installation
+run
