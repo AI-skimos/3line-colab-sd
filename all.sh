@@ -162,7 +162,7 @@ function install {
     safe_fetch https://huggingface.co/Yukihime256/840000/resolve/main/vae-ft-mse-840000-ema-pruned.ckpt $BASEPATH/models/models/VAE vae-ft-mse-840000-ema-pruned.ckpt
 
     #Install Dependencies
-    sed_for installation
+    sed_for installation $BASEPATH
     cd $BASEPATH && python launch.py --skip-torch-cuda-test && echo "Installation Completed" > $BASEPATH/.install_status
 }
 
@@ -186,7 +186,7 @@ function run {
     reset_repos $BATHPATH
 
     #Prepare for running
-    sed_for run
+    sed_for run $BASEPATH
 
     #Make sure CLIP folder exists and downloads the model if not present
     mkdir -p $BASEPATH/models/CLIP
