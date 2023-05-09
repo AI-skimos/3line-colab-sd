@@ -163,7 +163,7 @@ function install {
 
     #Download Model & VAE
     safe_fetch https://huggingface.co/XpucT/Deliberate/resolve/main/Deliberate_v2.safetensors $BASEPATH/models/Stable-diffusion Deliberate_v2.safetensors
-    safe_fetch https://huggingface.co/Yukihime256/840000/resolve/main/vae-ft-mse-840000-ema-pruned.ckpt $BASEPATH/models/models/VAE vae-ft-mse-840000-ema-pruned.ckpt
+    safe_fetch https://huggingface.co/Yukihime256/840000/resolve/main/vae-ft-mse-840000-ema-pruned.ckpt $BASEPATH/models/VAE vae-ft-mse-840000-ema-pruned.ckpt
 
     #Install Dependencies
     sed_for installation $BASEPATH
