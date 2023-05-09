@@ -14,7 +14,7 @@ function safe_git {
 
   if [ -d "$local_folder/.git" ] && git -C "$local_folder" rev-parse &> /dev/null; then
     echo "INFO: Repo $local_folder is valid, performing update."
-    git -c core.hooksPath=/dev/null -C "$local_folder" pull && return 0
+    git -c core.hooksPath=/dev/null -C "$local_folder" pull ${branch_name:+-b "origin $branch_name"} && return 0
   else
     echo "INFO: Repo $local_folder is not valid or does not exist, cloning."
     rm -rf "$local_folder"
@@ -77,7 +77,7 @@ function reset_repos {
         return 1
     fi
     local base_path="$1"
-    cd $base_path && find . -maxdepth 1 -type d \( ! -name . \) -exec bash -c "cd '{}' && git reset --hard && git -c core.hooksPath=/dev/null pull" \;
+    cd $base_path && find . -maxdepth 1 -type d \( ! -name . \) -exec bash -c "cd '{}' && pwd && git reset --hard && git -c core.hooksPath=/dev/null pull" \;
 }
 
 function sed_for {
