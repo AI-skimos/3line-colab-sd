@@ -109,15 +109,14 @@ function sed_for {
 
 function install_perf_tools {
     local packages=("http://launchpadlibrarian.net/367274644/libgoogle-perftools-dev_2.5-2.2ubuntu3_amd64.deb" "https://launchpad.net/ubuntu/+source/google-perftools/2.5-2.2ubuntu3/+build/14795286/+files/google-perftools_2.5-2.2ubuntu3_all.deb" "https://launchpad.net/ubuntu/+source/google-perftools/2.5-2.2ubuntu3/+build/14795286/+files/libtcmalloc-minimal4_2.5-2.2ubuntu3_amd64.deb" "https://launchpad.net/ubuntu/+source/google-perftools/2.5-2.2ubuntu3/+build/14795286/+files/libgoogle-perftools4_2.5-2.2ubuntu3_amd64.deb")
-    #local regex=".*\/([a-z0-9\-]+)_([0-9\.]+-[0-9a-z]+)_.*"
-    local regex="[^/]+/([^_]+)_([^/]+)_([^/]+)\.deb$"
+    regex="/([^/]+)\.deb$"
     for package in "${packages[@]}"; do
         echo $package
         if [[ $package =~ $regex ]]; then
-          package_name=${BASH_REMATCH[1]}
-          package_version=${BASH_REMATCH[2]}
-          package_arch=${BASH_REMATCH[3]}
-          echo $package_name,$package_version,$package_arch
+          filename=${BASH_REMATCH[1]}
+          package_name=$(echo "${BASH_REMATCH[1]}" | cut -d "_" -f 1)
+          package_version=$(echo "${BASH_REMATCH[1]}" | cut -d "_" -f 2)
+          echo "Matched: ${package_name}, ${package_version}"
           if dpkg-query -W "$package_name" 2>/dev/null | grep "^$name $version"; then
             if [ $version -eq $package_version ]; then
               echo "Package $package_name already installed and with correct version $package_version, skipping"
