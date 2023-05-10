@@ -133,9 +133,6 @@ function install_perf_tools {
 }
 
 function install {
-    #Update packages
-    apt -y update -qq && apt -y install -qq unionfs-fuse libcairo2-dev pkg-config python3-dev
-
     #Prepare runtime
     safe_git https://github.com/camenduru/stable-diffusion-webui $BASEPATH v2.1
     safe_git https://huggingface.co/embed/negative $BASEPATH/embeddings/negative
@@ -221,6 +218,9 @@ while getopts "f" opt; do
       ;;
   esac
 done
+
+#Update packages
+apt -y update -qq && apt -y install -qq unionfs-fuse libcairo2-dev pkg-config python3-dev
 
 if [ "$force" = true ] || [ ! -e "$BASEPATH/.install_status" ] || ! grep -qs "Installation Completed" "$BASEPATH/.install_status"; then
     install
