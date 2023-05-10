@@ -211,5 +211,21 @@ function run {
     python launch.py --listen --opt-sdp-attention --enable-insecure-extension-access --theme dark --gradio-queue --clip-models-path $BASEPATH/models/CLIP --multiple
 }
 
-install
+force=false
+while getopts "f" opt; do
+  case ${opt} in
+    f)
+      force=true
+      ;;
+    \?)
+      echo "Invalid option: -$OPTARG" >&2
+      exit 1
+      ;;
+  esac
+done
+
+if [ "$force" = true ] || [ ! -e "$BASEPATH/.install_status" ] || ! grep -qs "Installation Completed" "$BASEPATH/.install_status"; then
+    install
+fi
+
 run
