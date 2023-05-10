@@ -69,18 +69,20 @@ function safe_fetch {
 
 function reset_repos {
     if [ "$#" -lt 1 ]; then
-        echo "Usage: reset_repos <base_dir>"
+        echo "Usage: reset_repos <base_dir> [<all>]"
         return 1
     fi
     if [ ! -d "$1" ]; then
         echo "Error: The base_dir passed is not a valid path"
         return 1
     fi
-    local base_path="$1"
+    local base_path="$1" all=${2:-""}
     #cd $base_path && pwd && git reset --hard && git pull
     git -C $base_path reset --hard
     git -C $base_path/repositories/stable-diffusion-stability-ai reset --hard
-    cd $base_path/extensions && find . -maxdepth 1 -type d \( ! -name . \) -exec bash -c "echo '{}' && git -C '{}' reset --hard && git pull" \;
+    if [ "$all" = "all" ]; then
+      cd $base_path/extensions && find . -maxdepth 1 -type d \( ! -name . \) -exec bash -c "echo '{}' && git -C '{}' reset --hard && git pull" \;
+    fi
 }
 
 function sed_for {
@@ -159,7 +161,7 @@ function install {
     safe_git https://github.com/thomasasfk/sd-webui-aspect-ratio-helper  $BASEPATH/extensions/sd-webui-aspect-ratio-helper
     safe_git https://github.com/dtlnor/stable-diffusion-webui-localization-zh_CN $BASEPATH/extensions/stable-diffusion-webui-localization-zh_CN
     safe_git https://github.com/AI-skimos/sd-webui-prompt-sr-range $BASEPATH/extensions/sd-webui-prompt-sr-range
-    reset_repos $BASEPATH
+    reset_repos $BASEPATH all
 
     #Download Controlnet Models
     safe_fetch https://huggingface.co/ckpt/ControlNet-v1-1/resolve/main/control_v11f1e_sd15_tile_fp16.safetensors $BASEPATH/extensions/sd-webui-controlnet/models control_v11f1e_sd15_tile_fp16.safetensors
