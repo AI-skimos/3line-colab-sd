@@ -6,7 +6,7 @@ from google.colab import drive
 drive.mount('/content/drive')
 !bash <(curl -sL https://raw.githubusercontent.com/AI-skimos/3line-colab-sd/master/all.sh)
 ```
-
+![](main.png)
 ## 特性
 * 挂载谷歌云盘安装(请确保你的云盘有足够空间)
 * 全程安全下载, 避免网络及服务中断/错误造成的文件或repo损坏
