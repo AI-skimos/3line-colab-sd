@@ -78,7 +78,7 @@ function reset_repos {
     fi
     local base_path="$1"
     #cd $base_path && pwd && git reset --hard && git pull
-    git -C $base_path reset --hard && tail $base_path/launch.py
+    git -C $base_path reset --hard
     git -C $base_path/repositories/stable-diffusion-stability-ai reset --hard
     cd $base_path/extensions && find . -maxdepth 1 -type d \( ! -name . \) -exec bash -c "echo '{}' && git -C '{}' reset --hard && git pull" \;
 }
