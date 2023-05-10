@@ -129,10 +129,9 @@ function install_perf_tools {
           echo "Invalid URL format"
         fi
     done
-    $install && dpkg -i /tmp/*.deb
-
     apt install -qq libunwind8-dev
     env LD_PRELOAD=libtcmalloc.so &>/dev/null
+    $install && dpkg -i /tmp/*.deb
 }
 
 function install {
