@@ -108,10 +108,10 @@ function sed_for {
     fi
     sed -i -e 's/checkout {commithash}/checkout --force {commithash}/g' $base_dir/launch.py
 }
-
 function install_perf_tools {
     local packages=("http://launchpadlibrarian.net/367274644/libgoogle-perftools-dev_2.5-2.2ubuntu3_amd64.deb" "https://launchpad.net/ubuntu/+source/google-perftools/2.5-2.2ubuntu3/+build/14795286/+files/google-perftools_2.5-2.2ubuntu3_all.deb" "https://launchpad.net/ubuntu/+source/google-perftools/2.5-2.2ubuntu3/+build/14795286/+files/libtcmalloc-minimal4_2.5-2.2ubuntu3_amd64.deb" "https://launchpad.net/ubuntu/+source/google-perftools/2.5-2.2ubuntu3/+build/14795286/+files/libgoogle-perftools4_2.5-2.2ubuntu3_amd64.deb")
     regex="/([^/]+)\.deb$"
+    install=false
     for package in "${packages[@]}"; do
         echo $package
         if [[ $package =~ $regex ]]; then
@@ -124,11 +124,12 @@ function install_perf_tools {
           fi
           #not installed or not the required version
           safe_fetch $package /tmp $package_name.deb
-          dpkg -i /tmp/$package_name.deb
+          install=true
         else
           echo "Invalid URL format"
         fi
     done
+    $install && dpkg -i /tmp/*.deb
 
     apt install -qq libunwind8-dev
     env LD_PRELOAD=libtcmalloc.so &>/dev/null
