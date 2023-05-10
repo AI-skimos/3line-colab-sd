@@ -1,6 +1,6 @@
 三行代码自动部署SD到谷歌colab。
 
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/AI-skimos/3line-colab-sd/master/all.ipynb)
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/AI-skimos/3line-colab-sd/blob/master/all.ipynb)
 ```
 from google.colab import drive
 drive.mount('/content/drive')
