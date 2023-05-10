@@ -119,6 +119,7 @@ function install_perf_tools {
           echo "Matched: ${package_name}, ${package_version}"
           if dpkg-query -W "$package_name" 2>/dev/null | grep "$package_version"; then
             echo "already installed: $package_name with version $package_version, skipping"
+            continue
           fi
           #not installed or not the required version
           safe_fetch $package /tmp $package_name.deb
