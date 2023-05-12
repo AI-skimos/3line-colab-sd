@@ -1,0 +1,1 @@
+https://huggingface.co/embed/upscale/resolve/main/4x-UltraSharp.pth
