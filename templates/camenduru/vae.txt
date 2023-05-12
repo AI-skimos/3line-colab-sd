@@ -1,0 +1,1 @@
+https://huggingface.co/Yukihime256/840000/resolve/main/vae-ft-mse-840000-ema-pruned.ckpt

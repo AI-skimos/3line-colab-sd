@@ -1,0 +1,1 @@
+https://huggingface.co/XpucT/Deliberate/resolve/main/Deliberate_v2.safetensors
