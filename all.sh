@@ -2,7 +2,6 @@
 
 env PYTHONDONTWRITEBYTECODE=1 &>/dev/null
 env TF_CPP_MIN_LOG_LEVEL=1 &>/dev/null
-BASEPATH=/content/drive/MyDrive/SD
 
 function safe_git {
   if [ "$#" -lt 2 ] || [ "$#" -gt 3 ]; then
@@ -239,7 +238,7 @@ function install {
     component_types=( "webui" "extensions" "scripts" "embeddings" "ESRGAN_models" "checkpoints" "hypernetworks" "lora" "lycoris" "vae" "clip" "cn_models" )
     for component_type in "${component_types[@]}"
     do
-      template_path=$(pwd)/templates/camenduru
+      template_path=$1
       config_path=$template_path/$component_type.txt
       echo $config_path
       if [[ -f $config_path ]]; then
@@ -270,24 +269,78 @@ function run {
     cd $BASEPATH && python launch.py --listen --opt-sdp-attention --enable-insecure-extension-access --theme dark --gradio-queue --clip-models-path $BASEPATH/models/CLIP --multiple
 }
 
-force=false
-while getopts "f" opt; do
-  case ${opt} in
-    f)
-      force=true
-      ;;
-    \?)
-      echo "Invalid option: -$OPTARG" >&2
-      exit 1
-      ;;
-  esac
+BASEPATH=/content/drive/MyDrive/SD
+TEMPLATE_LOCATION="https://github.com/AI-skimos/3line-colab-sd"
+TEMPLATE_NAME="camenduru"
+while [[ $# -gt 0 ]]
+do
+    key="$1"
+
+    case $key in
+        -f|--force-install)
+        FORCE_INSTALL=true
+        shift
+        ;;
+        -l|--template-location)
+        TEMPLATE_LOCATION="$2"
+        git ls-remote $TEMPLATE_LOCATION &> /dev/null
+        if [[ $? -ne 0 && ! -d $TEMPLATE_LOCATION ]]; then
+          echo "Error: Specified template location is neither a valid git repo, nor a valid local path: $TEMPLATE_LOCATION"
+          exit 1
+        fi
+        shift 
+        shift
+        ;;
+        -n|--template-path)
+        TEMPLATE_NAME="$2"
+        shift
+        shift
+        ;;
+        -i|--install-path)
+        BASEPATH="$2"
+        shift
+        shift
+        ;;
+        *)
+        echo "Usage: $0 [-f|--force-install] [-l|--template-location <git repo|directory>] [-n|--template-name <name>] [-i|--install-path <directory>]"
+        echo "Options:"
+        echo "-f, --force-install          Force reinstall"
+        echo "-l, --template-location      Location of the template repo or local directory (default: https://github.com/AI-skimos/3line-colab-sd)"
+        echo "-n, --template-name          Name of the template to install (default: templates/camenduru)"
+        echo "-i, --install-path           Path to install SD (default: /content/drive/MyDrive/SD)"
+        exit 1
+        ;;
+    esac
 done
 
-Update packages
+if [[ -z "$FORCE_INSTALL" ]]; then FORCE_INSTALL=false; fi
+
+git ls-remote $TEMPLATE_LOCATION &> /dev/null
+if [[ $? -eq 0 ]]; then
+  #location is a git repo
+  TEMPLATE_PATH=/tmp/$(basename $TEMPLATE_LOCATION)
+  safe_git $TEMPLATE_LOCATION $TEMPLATE_PATH develop
+else
+  TEMPLATE_PATH=$TEMPLATE_LOCATION
+fi
+
+echo $(find "$TEMPLATE_PATH" -maxdepth 2 -type d -name "$TEMPLATE_NAME" -print -quit)
+FINAL_PATH=$(find "$TEMPLATE_PATH" -maxdepth 2 -type d -name "$TEMPLATE_NAME" -print -quit)
+if [ -z $FINAL_PATH ]; then
+  echo "Error: $TEMPLATE_PATH does not contain a template named $TEMPLATE_NAME. Please confirm you have correctly specified template location and template name."
+  exit 1
+fi
+
+echo "FORCE_INSTALL: $FORCE_INSTALL"
+echo "TEMPLATE_LOCATION: $TEMPLATE_LOCATION"
+echo "TEMPLATE_NAME: $TEMPLATE_NAME"
+echo "FINAL_PATH: $FINAL_PATH"
+
+#Update packages
 apt -y update -qq && apt -y install -qq unionfs-fuse libcairo2-dev pkg-config python3-dev
 
 if [ "$force" = true ] || [ ! -e "$BASEPATH/.install_status" ] || ! grep -qs "Installation Completed" "$BASEPATH/.install_status"; then
-    install
+    install $FINAL_PATH
 fi
 
 run
