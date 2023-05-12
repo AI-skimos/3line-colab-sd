@@ -283,7 +283,7 @@ while getopts "f" opt; do
   esac
 done
 
-Update packages
+#Update packages
 apt -y update -qq && apt -y install -qq unionfs-fuse libcairo2-dev pkg-config python3-dev
 
 if [ "$force" = true ] || [ ! -e "$BASEPATH/.install_status" ] || ! grep -qs "Installation Completed" "$BASEPATH/.install_status"; then
