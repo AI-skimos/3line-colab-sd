@@ -2,8 +2,7 @@
 
 env PYTHONDONTWRITEBYTECODE=1 &>/dev/null
 env TF_CPP_MIN_LOG_LEVEL=1 &>/dev/null
-#BASEPATH=/content/drive/MyDrive/SD
-BASEPATH=/tmp/SD
+BASEPATH=/content/drive/MyDrive/SD
 
 function safe_git {
   if [ "$#" -lt 2 ] || [ "$#" -gt 3 ]; then
