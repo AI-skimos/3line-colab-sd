@@ -291,7 +291,7 @@ do
         shift 
         shift
         ;;
-        -n|--template-path)
+        -n|--template-name)
         TEMPLATE_NAME="$2"
         shift
         shift
