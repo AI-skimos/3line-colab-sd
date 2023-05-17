@@ -2,7 +2,6 @@
 
 env PYTHONDONTWRITEBYTECODE=1 &>/dev/null
 env TF_CPP_MIN_LOG_LEVEL=1 &>/dev/null
-BASEPATH=/content/drive/MyDrive/SD
 
 function safe_git {
   if [ "$#" -lt 2 ] || [ "$#" -gt 3 ]; then
@@ -77,7 +76,6 @@ function reset_repos {
         return 1
     fi
     local base_path="$1" all=${2:-""}
-    #cd $base_path && pwd && git reset --hard && git pull
     git -C $base_path reset --hard
     git -C $base_path/repositories/stable-diffusion-stability-ai reset --hard
     if [ "$all" = "all" ]; then
@@ -108,7 +106,8 @@ function sed_for {
     fi
     sed -i -e 's/checkout {commithash}/checkout --force {commithash}/g' $base_dir/launch.py
 }
-function install_perf_tools {
+
+function prepare_perf_tools {
     local packages=("http://launchpadlibrarian.net/367274644/libgoogle-perftools-dev_2.5-2.2ubuntu3_amd64.deb" "https://launchpad.net/ubuntu/+source/google-perftools/2.5-2.2ubuntu3/+build/14795286/+files/google-perftools_2.5-2.2ubuntu3_all.deb" "https://launchpad.net/ubuntu/+source/google-perftools/2.5-2.2ubuntu3/+build/14795286/+files/libtcmalloc-minimal4_2.5-2.2ubuntu3_amd64.deb" "https://launchpad.net/ubuntu/+source/google-perftools/2.5-2.2ubuntu3/+build/14795286/+files/libgoogle-perftools4_2.5-2.2ubuntu3_amd64.deb")
     regex="/([^/]+)\.deb$"
     install=false
@@ -134,44 +133,120 @@ function install_perf_tools {
     $install && dpkg -i /tmp/*.deb
 }
 
+function assemble_target_path {
+    if [[ "$#" -ne 1 ]]; then
+      echo "Usage: assemble_target_path <type>"
+      return 1
+    fi
+    local type=$1
+    case $type in
+      webui)
+        echo $BASEPATH
+        ;;
+      extensions)
+        echo $BASEPATH/extensions
+        ;;
+      scripts)
+        echo $BASEPATH/scripts
+        ;;
+      embeddings)
+        echo $BASEPATH/embeddings
+        ;;
+      ESRGAN_models)
+        echo $BASEPATH/models/ESRGAN
+        ;;
+      checkpoints)
+        echo $BASEPATH/models/Stable-diffusion
+        ;;
+      hypernetworks)
+        echo $BASEPATH/models/hypernetworks
+        ;;
+      lora)
+        echo $BASEPATH/models/Lora
+        ;;
+      lycoris)
+        echo $BASEPATH/models/LyCORIS
+        ;;
+      vae)
+        echo $BASEPATH/models/VAE
+        ;;
+      clip)
+        echo $BASEPATH/models/CLIP
+        ;;
+      cn_models)
+        echo $BASEPATH/extensions/sd-webui-controlnet/models
+        ;;
+      *)
+        echo "Error: Unrecognized template config type $type."
+        exit 1
+        ;;
+    esac
+}
+
+function install_from_template {
+    if [ "$#" -ne 1 ]; then
+      echo "Usage: install_from_template <config_path>"
+      return 1
+    fi
+    local config_path=$1
+    if [[ -f $config_path ]]; then
+      mapfile -t lines < $config_path
+      for line in "${lines[@]}"
+      do
+          echo "->Processing template config line: $line"
+          trimmed_url=$(echo "$line" | tr -d ' ' | cut -d "#" -f 1)
+          base_name=$(basename $trimmed_url)
+          if [[ ! -z $trimmed_url ]]; then
+            type=$(basename $config_path | cut -d "." -f 1)
+            git ls-remote $trimmed_url &> /dev/null
+            if [[ $? -eq 0 ]]; then
+              #this is a git repo
+              branch=$(echo "$line" | grep -q "#" && echo "$line" | cut -d "#" -f 2)
+              echo "->This is a $type component Git repo with branch $branch, will be saved to $(assemble_target_path $type)"
+              if [[ $type == "webui" ]]; then
+                safe_git "$trimmed_url" $(assemble_target_path $type) ${branch:+$branch}
+                break
+              else
+                safe_git "$trimmed_url" $(assemble_target_path $type)/$base_name ${branch:+$branch}
+              fi
+            else
+              echo "->This is a $type component file, will be saved to $(assemble_target_path $type)"
+              safe_fetch $trimmed_url $(assemble_target_path $type) $base_name
+            fi
+          fi
+      done
+    fi
+}
+
+function prepare_pip_deps {
+    pip install -q torch==2.0.0+cu118 torchvision==0.15.1+cu118 torchaudio==2.0.1+cu118 torchtext==0.15.1 torchdata==0.6.0 --extra-index-url https://download.pytorch.org/whl/cu118 -U
+    pip install -q xformers==0.0.18 triton==2.0.0 -U
+}
+
+function prepare_fuse_dir {
+    #Prepare drive fusion MOVE THIS TOLATER
+    mkdir /content/fused-models
+    mkdir /content/models
+    mkdir /content/fused-lora
+    mkdir /content/lora
+    unionfs-fuse $BASEPATH/models/Stable-diffusion=RW:/content/models=RW /content/fused-models
+    unionfs-fuse $BASEPATH/extensions/sd-webui-additional-networks/models/lora=RW:$BASEPATH/models/Lora=RW:/content/lora=RW /content/fused-lora
+}
+
 function install {
     #Prepare runtime
-    safe_git https://github.com/camenduru/stable-diffusion-webui $BASEPATH v2.1
-    safe_git https://huggingface.co/embed/negative $BASEPATH/embeddings/negative
-    safe_git https://huggingface.co/embed/lora $BASEPATH/models/Lora/positive
-    safe_fetch https://huggingface.co/embed/upscale/resolve/main/4x-UltraSharp.pth $BASEPATH/models/ESRGAN 4x-UltraSharp.pth
-    safe_fetch https://raw.githubusercontent.com/camenduru/stable-diffusion-webui-scripts/main/run_n_times.py $BASEPATH/scripts run_n_times.py
-    safe_git https://github.com/deforum-art/deforum-for-automatic1111-webui $BASEPATH/extensions/deforum-for-automatic1111-webui
-    safe_git https://github.com/camenduru/stable-diffusion-webui-images-browser $BASEPATH/extensions/stable-diffusion-webui-images-browser
-    safe_git https://github.com/camenduru/stable-diffusion-webui-huggingface $BASEPATH/extensions/stable-diffusion-webui-huggingface
-    safe_git https://github.com/camenduru/sd-civitai-browser $BASEPATH/extensions/sd-civitai-browser
-    safe_git https://github.com/kohya-ss/sd-webui-additional-networks $BASEPATH/extensions/sd-webui-additional-networks
-    safe_git https://github.com/Mikubill/sd-webui-controlnet $BASEPATH/extensions/sd-webui-controlnet
-    safe_git https://github.com/fkunn1326/openpose-editor $BASEPATH/extensions/openpose-editor
-    safe_git https://github.com/jexom/sd-webui-depth-lib $BASEPATH/extensions/sd-webui-depth-lib
-    safe_git https://github.com/hnmr293/posex $BASEPATH/extensions/posex
-    safe_git https://github.com/nonnonstop/sd-webui-3d-open-pose-editor $BASEPATH/extensions/sd-webui-3d-open-pose-editor
-    safe_git https://github.com/camenduru/sd-webui-tunnels $BASEPATH/extensions/sd-webui-tunnels
-    safe_git https://github.com/etherealxx/batchlinks-webui $BASEPATH/extensions/batchlinks-webui
-    safe_git https://github.com/camenduru/stable-diffusion-webui-catppuccin $BASEPATH/extensions/stable-diffusion-webui-catppuccin
-    safe_git https://github.com/KohakuBlueleaf/a1111-sd-webui-locon $BASEPATH/extensions/a1111-sd-webui-locon
-    safe_git https://github.com/AUTOMATIC1111/stable-diffusion-webui-rembg $BASEPATH/extensions/stable-diffusion-webui-rembg
-    safe_git https://github.com/ashen-sensored/stable-diffusion-webui-two-shot $BASEPATH/extensions/stable-diffusion-webui-two-shot
-    safe_git https://github.com/camenduru/sd_webui_stealth_pnginfo $BASEPATH/extensions/sd_webui_stealth_pnginfo
-    safe_git https://github.com/thomasasfk/sd-webui-aspect-ratio-helper  $BASEPATH/extensions/sd-webui-aspect-ratio-helper
-    safe_git https://github.com/dtlnor/stable-diffusion-webui-localization-zh_CN $BASEPATH/extensions/stable-diffusion-webui-localization-zh_CN
-    safe_git https://github.com/AI-skimos/sd-webui-prompt-sr-range $BASEPATH/extensions/sd-webui-prompt-sr-range
+    component_types=( "webui" "extensions" "scripts" "embeddings" "ESRGAN_models" "checkpoints" "hypernetworks" "lora" "lycoris" "vae" "clip" "cn_models" )
+    for component_type in "${component_types[@]}"
+    do
+      template_path=$1
+      config_path=$template_path/$component_type.txt
+      echo $config_path
+      if [[ -f $config_path ]]; then
+        install_from_template $config_path
+      fi
+    done
+
     reset_repos $BASEPATH all
-
-    #Download Controlnet Models
-    safe_fetch https://huggingface.co/ckpt/ControlNet-v1-1/resolve/main/control_v11f1e_sd15_tile_fp16.safetensors $BASEPATH/extensions/sd-webui-controlnet/models control_v11f1e_sd15_tile_fp16.safetensors
-    #safe_fetch https://huggingface.co/ckpt/ControlNet-v1-1/resolve/main/control_v11p_sd15_canny_fp16.safetensors $BASEPATH/extensions/sd-webui-controlnet/models control_v11p_sd15_canny_fp16.safetensors
-    #safe_fetch https://huggingface.co/ckpt/ControlNet-v1-1/resolve/main/control_v11p_sd15_openpose_fp16.safetensors $BASEPATH/extensions/sd-webui-controlnet/models control_v11p_sd15_openpose_fp16.safetensors
-    #safe_fetch https://huggingface.co/ckpt/ControlNet-v1-1/resolve/main/control_v11p_sd15_seg_fp16.safetensors $BASEPATH/extensions/sd-webui-controlnet/models control_v11p_sd15_seg_fp16.safetensors
-
-    #Download Model & VAE
-    safe_fetch https://huggingface.co/XpucT/Deliberate/resolve/main/Deliberate_v2.safetensors $BASEPATH/models/Stable-diffusion Deliberate_v2.safetensors
-    safe_fetch https://huggingface.co/Yukihime256/840000/resolve/main/vae-ft-mse-840000-ema-pruned.ckpt $BASEPATH/models/VAE vae-ft-mse-840000-ema-pruned.ckpt
 
     #Install Dependencies
     sed_for installation $BASEPATH
@@ -180,19 +255,10 @@ function install {
 
 function run {
     #Install google perf tools
-    install_perf_tools
+    prepare_perf_tools
 
-    #Install pip dependencies
-    pip install -q torch==2.0.0+cu118 torchvision==0.15.1+cu118 torchaudio==2.0.1+cu118 torchtext==0.15.1 torchdata==0.6.0 --extra-index-url https://download.pytorch.org/whl/cu118 -U
-    pip install -q xformers==0.0.18 triton==2.0.0 -U
-
-    #Prepare drive fusion MOVE THIS TOLATER
-    mkdir /content/fused-models
-    mkdir /content/models
-    mkdir /content/fused-lora
-    mkdir /content/lora
-    unionfs-fuse $BASEPATH/models/Stable-diffusion=RW:/content/models=RW /content/fused-models
-    unionfs-fuse $BASEPATH/extensions/sd-webui-additional-networks/models/lora=RW:$BASEPATH/models/Lora=RW:/content/lora=RW /content/fused-lora
+    prepare_pip_deps
+    prepare_fuse_dir
 
     #Healthcheck and update all repos
     reset_repos $BASEPATH
@@ -200,32 +266,81 @@ function run {
     #Prepare for running
     sed_for run $BASEPATH
 
-    #Make sure CLIP folder exists and downloads the model if not present
-    mkdir -p $BASEPATH/models/CLIP
-    safe_fetch https://openaipublic.azureedge.net/clip/models/b8cca3fd41ae0c99ba7e8951adf17d267cdb84cd88be6f7c2e0eca1737a03836/ViT-L-14.pt $BASEPATH/models/CLIP ViT-L-14.pt
- 
-    cd $BASEPATH
-    python launch.py --listen --opt-sdp-attention --enable-insecure-extension-access --theme dark --gradio-queue --clip-models-path $BASEPATH/models/CLIP --multiple
+    cd $BASEPATH && python launch.py --listen --opt-sdp-attention --enable-insecure-extension-access --theme dark --gradio-queue --clip-models-path $BASEPATH/models/CLIP --multiple
 }
 
-force=false
-while getopts "f" opt; do
-  case ${opt} in
-    f)
-      force=true
-      ;;
-    \?)
-      echo "Invalid option: -$OPTARG" >&2
-      exit 1
-      ;;
-  esac
+BASEPATH=/content/drive/MyDrive/SD
+TEMPLATE_LOCATION="https://github.com/AI-skimos/3line-colab-sd"
+TEMPLATE_NAME="camenduru"
+while [[ $# -gt 0 ]]
+do
+    key="$1"
+
+    case $key in
+        -f|--force-install)
+        FORCE_INSTALL=true
+        shift
+        ;;
+        -l|--template-location)
+        TEMPLATE_LOCATION="$2"
+        git ls-remote $TEMPLATE_LOCATION &> /dev/null
+        if [[ $? -ne 0 && ! -d $TEMPLATE_LOCATION ]]; then
+          echo "Error: Specified template location is neither a valid git repo, nor a valid local path: $TEMPLATE_LOCATION"
+          exit 1
+        fi
+        shift 
+        shift
+        ;;
+        -n|--template-name)
+        TEMPLATE_NAME="$2"
+        shift
+        shift
+        ;;
+        -i|--install-path)
+        BASEPATH="$2"
+        shift
+        shift
+        ;;
+        *)
+        echo "Usage: $0 [-f|--force-install] [-l|--template-location <git repo|directory>] [-n|--template-name <name>] [-i|--install-path <directory>]"
+        echo "Options:"
+        echo "-f, --force-install          Force reinstall"
+        echo "-l, --template-location      Location of the template repo or local directory (default: https://github.com/AI-skimos/3line-colab-sd)"
+        echo "-n, --template-name          Name of the template to install (default: templates/camenduru)"
+        echo "-i, --install-path           Path to install SD (default: /content/drive/MyDrive/SD)"
+        exit 1
+        ;;
+    esac
 done
+
+if [[ -z "$FORCE_INSTALL" ]]; then FORCE_INSTALL=false; fi
+
+git ls-remote $TEMPLATE_LOCATION &> /dev/null
+if [[ $? -eq 0 ]]; then
+  #location is a git repo
+  TEMPLATE_PATH=/tmp/$(basename $TEMPLATE_LOCATION)
+  safe_git $TEMPLATE_LOCATION $TEMPLATE_PATH
+else
+  TEMPLATE_PATH=$TEMPLATE_LOCATION
+fi
+
+echo $(find "$TEMPLATE_PATH" -maxdepth 2 -type d -name "$TEMPLATE_NAME" -print -quit)
+FINAL_PATH=$(find "$TEMPLATE_PATH" -maxdepth 2 -type d -name "$TEMPLATE_NAME" -print -quit)
+if [ -z $FINAL_PATH ]; then
+  echo "Error: $TEMPLATE_PATH does not contain a template named $TEMPLATE_NAME. Please confirm you have correctly specified template location and template name."
+  exit 1
+fi
+
+echo "FORCE_INSTALL: $FORCE_INSTALL"
+echo "TEMPLATE_LOCATION: $TEMPLATE_LOCATION"
+echo "TEMPLATE_NAME: $TEMPLATE_NAME"
+echo "FINAL_PATH: $FINAL_PATH"
 
 #Update packages
 apt -y update -qq && apt -y install -qq unionfs-fuse libcairo2-dev pkg-config python3-dev
 
-if [ "$force" = true ] || [ ! -e "$BASEPATH/.install_status" ] || ! grep -qs "Installation Completed" "$BASEPATH/.install_status"; then
-    install
+if [ "$FORCE_INSTALL" = true ] || [ ! -e "$BASEPATH/.install_status" ] || ! grep -qs "Installation Completed" "$BASEPATH/.install_status"; then
+    install $FINAL_PATH
 fi
 
 run
