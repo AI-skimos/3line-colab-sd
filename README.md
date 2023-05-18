@@ -15,7 +15,7 @@
 ### 其他基于jupyter notebook的在线云服务
 拷贝粘贴以下代码并运行
 ```
-!bash <(curl -sL https://raw.githubusercontent.com/AI-skimos/3line-colab-sd/master/all.sh)
+!curl -sL https://raw.githubusercontent.com/AI-skimos/3line-colab-sd/master/all.sh | bash 
 ```
 
 ## 模板支持
