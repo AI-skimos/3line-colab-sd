@@ -15,7 +15,7 @@
 ### 其他基于jupyter notebook的在线云服务
 拷贝粘贴以下代码并运行
 ```
-!curl -sL https://raw.githubusercontent.com/AI-skimos/3line-colab-sd/master/all.sh | bash 
+!curl -sL https://raw.githubusercontent.com/AI-skimos/3line-colab-sd/master/all.sh | bash -i /path/to/SD/folder
 ```
 
 ## 模板支持
@@ -25,6 +25,7 @@
 |-f, --force-install|强制重新安装，可用于解决已有安装实例中的代码、文件损坏等问题|false （不强制重新安装）|
 |-l, --template-location|模型文件地址。可以是一个github repo （比如：https://github.com/xxx/yyy），也可以是你的服务器本地的目录路径（比如：/tmp/template/example-template）。|https://github.com/AI-skimos/3line-colab-sd|
 |-n, --template-name|模板的名称，即模板的目录名|camenduru|
+|-i, --install-path|SD的安装路径|/content/drive/MyDrive/SD|
 
 ### 默认值安装
 ```
