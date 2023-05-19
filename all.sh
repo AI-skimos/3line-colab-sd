@@ -56,7 +56,7 @@ function safe_fetch {
 
   mkdir -p "$output_dir"
   for ((i=1; i<=retries; i++)); do
-    wget -q --show-progress --continue --tries=3 --timeout="$timeout" --waitretry="$waitretry" --no-dns-cache -O "$tmp_file" "$url" && { mv "$tmp_file" "$output_dir/$output_filename" && echo "INFO: downloaded '$output_filename' to '$output_dir'" && return 0; }
+    aria2c --console-log-level=error -c -x 16 -s 16 -k 1M "$url" -o "$tmp_file" && { mv "$tmp_file" "$output_dir/$output_filename" && echo "INFO: downloaded '$output_filename' to '$output_dir'" && return 0; }
     echo "NOTICE: failed to download '$output_filename', retrying in $waitretry seconds (attempt $i of $retries)..."
     sleep "$waitretry"
   done
@@ -337,7 +337,7 @@ echo "TEMPLATE_NAME: $TEMPLATE_NAME"
 echo "FINAL_PATH: $FINAL_PATH"
 
 #Update packages
-apt -y update -qq && apt -y install -qq unionfs-fuse libcairo2-dev pkg-config python3-dev
+apt -y update -qq && apt -y install -qq unionfs-fuse libcairo2-dev pkg-config python3-dev aria2
 
 if [ "$FORCE_INSTALL" = true ] || [ ! -e "$BASEPATH/.install_status" ] || ! grep -qs "Installation Completed" "$BASEPATH/.install_status"; then
     install $FINAL_PATH
