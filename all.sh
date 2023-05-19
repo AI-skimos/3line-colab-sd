@@ -56,7 +56,7 @@ function safe_fetch {
 
   mkdir -p "$output_dir"
   for ((i=1; i<=retries; i++)); do
-    aria2c --console-log-level=error -c -x 16 -s 16 -k 1M "$url" -o "$tmp_file" && { mv "$tmp_file" "$output_dir/$output_filename" && echo "INFO: downloaded '$output_filename' to '$output_dir'" && return 0; }
+    aria2c --console-log-level=error -c -x 16 -s 16 -k 1M "$url" -d "$output_dir" -o "$tmp_file" && { mv "$output_dir/$tmp_file" "$output_dir/$output_filename" && echo "INFO: downloaded '$output_filename' to '$output_dir'" && return 0; }
     echo "NOTICE: failed to download '$output_filename', retrying in $waitretry seconds (attempt $i of $retries)..."
     sleep "$waitretry"
   done
