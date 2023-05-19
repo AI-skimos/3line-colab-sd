@@ -266,7 +266,7 @@ function run {
     #Prepare for running
     sed_for run $BASEPATH
 
-    cd $BASEPATH && python launch.py --listen --xformers --enable-insecure-extension-access --theme dark --clip-models-path $BASEPATH/models/CLIP
+    cd $BASEPATH && python launch.py --listen --share --xformers --enable-insecure-extension-access --theme dark --clip-models-path $BASEPATH/models/CLIP
 }
 
 BASEPATH=/content/drive/MyDrive/SD
