@@ -74,3 +74,4 @@
 * 安装脚本自动升级,无需手动更新安装代码
 * 基于https://github.com/camenduru/stable-diffusion-webui-colab, 集成大量插件及客制化改动
 * 绕开colab对SD的检查(避免警告)
+* 支持自定义模板
