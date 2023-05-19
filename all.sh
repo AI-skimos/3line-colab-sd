@@ -36,7 +36,7 @@ function safe_fetch {
   local retries=3
   local timeout=120
   local waitretry=5
-  local tmp_file="$output_dir/$output_filename.tmp"
+  local tmp_file="$output_filename.tmp"
 
   if [[ $# -ne 3 ]]; then
     echo "Usage: safe_fetch <url> <output_dir> <output_filename>"
