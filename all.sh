@@ -255,9 +255,10 @@ function install {
 
 function run {
     local template_path=$1
+    echo "DEBUG: template_path: $template_path"
     local params_file="params.txt"
     local params_file=$template_path/$params_file
-    echo "$params_file"
+    echo "DEBUG: params_file: $params_file"
     local params="--listen --share --xformers"
     if [[ -f $params_file ]]; then
       echo "DEBUG: $params_file is a file"
