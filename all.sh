@@ -254,6 +254,19 @@ function install {
 }
 
 function run {
+    local template_path=$1
+    local params_file="params.txt"
+    local params_file=$template_path/$params_file
+    local params="--listen --share --xformers"
+    if [[ -f $params_file ]]; then
+      mapfile -t lines < $params_file
+      for line in "${lines[@]}"
+      do
+        $params=$line
+        break
+      done
+    fi
+
     #Install google perf tools
     prepare_perf_tools
 
@@ -266,7 +279,7 @@ function run {
     #Prepare for running
     sed_for run $BASEPATH
 
-    cd $BASEPATH && python launch.py --listen --share --xformers --enable-insecure-extension-access --theme dark --clip-models-path $BASEPATH/models/CLIP
+    cd $BASEPATH && python launch.py $params
 }
 
 BASEPATH=/content/drive/MyDrive/SD
@@ -343,4 +356,4 @@ if [ "$FORCE_INSTALL" = true ] || [ ! -e "$BASEPATH/.install_status" ] || ! grep
     install $FINAL_PATH
 fi
 
-run
+run $FINAL_PATH
