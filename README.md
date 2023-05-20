@@ -38,7 +38,7 @@
 ```
 !bash <(curl -sL https://raw.githubusercontent.com/AI-skimos/3line-colab-sd/master/all.sh) -l https://github.com/xxx/yyy -n example-template
 ```
-该命令会克隆https://github.com/xxx/yyy项目并使用其中的example-template目录下的模板文件。
+该命令会克隆https://github.com/xxx/yyy 项目并使用其中的example-template目录下的模板文件。
 
 ### 从Google Drive指定模板文件
 当使用挂在GDrive安装方式时，可以指定一个谷歌云盘中的模板目录。
