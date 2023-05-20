@@ -336,7 +336,7 @@ git ls-remote $TEMPLATE_LOCATION &> /dev/null
 if [[ $? -eq 0 ]]; then
   #location is a git repo
   TEMPLATE_PATH=/tmp/$(basename $TEMPLATE_LOCATION)
-  safe_git $TEMPLATE_LOCATION $TEMPLATE_PATH
+  safe_git $TEMPLATE_LOCATION $TEMPLATE_PATH param
 else
   TEMPLATE_PATH=$TEMPLATE_LOCATION
 fi
