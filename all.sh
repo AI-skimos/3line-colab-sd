@@ -283,7 +283,7 @@ function run {
     #Prepare for running
     sed_for run $BASEPATH
 
-    cd $BASEPATH && python launch.py $params
+    cd $BASEPATH && python launch.py "$params"
 }
 
 BASEPATH=/content/drive/MyDrive/SD
