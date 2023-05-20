@@ -259,9 +259,11 @@ function run {
     local params_file=$template_path/$params_file
     local params="--listen --share --xformers"
     if [[ -f $params_file ]]; then
+      echo "DEBUG: $params_file is a file"
       mapfile -t lines < $params_file
       for line in "${lines[@]}"
       do
+        echo "DEBUG: content of $line"
         $params=$line
         break
       done
