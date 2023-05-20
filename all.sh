@@ -257,6 +257,7 @@ function run {
     local template_path=$1
     local params_file="params.txt"
     local params_file=$template_path/$params_file
+    echo "$params_file"
     local params="--listen --share --xformers"
     if [[ -f $params_file ]]; then
       echo "DEBUG: $params_file is a file"
