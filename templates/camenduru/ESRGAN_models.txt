@@ -1,1 +1,2 @@
 https://huggingface.co/embed/upscale/resolve/main/4x-UltraSharp.pth
+https://github.com/xinntao/Real-ESRGAN/releases/download/v0.2.2.4/RealESRGAN_x4plus_anime_6B.pth
