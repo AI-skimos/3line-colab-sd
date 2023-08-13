@@ -1,7 +1,6 @@
 https://github.com/deforum-art/deforum-for-automatic1111-webui
 https://github.com/camenduru/stable-diffusion-webui-images-browser
 https://github.com/camenduru/stable-diffusion-webui-huggingface
-https://github.com/camenduru/sd-civitai-browser
 https://github.com/kohya-ss/sd-webui-additional-networks
 https://github.com/Mikubill/sd-webui-controlnet
 https://github.com/fkunn1326/openpose-editor
@@ -18,3 +17,4 @@ https://github.com/camenduru/sd_webui_stealth_pnginfo
 https://github.com/thomasasfk/sd-webui-aspect-ratio-helper
 https://github.com/dtlnor/stable-diffusion-webui-localization-zh_CN
 https://github.com/AI-skimos/sd-webui-prompt-sr-range
+https://github.com/journey-ad/sd-webui-bilingual-localization
