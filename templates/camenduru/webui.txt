@@ -1,1 +1,1 @@
-https://github.com/camenduru/stable-diffusion-webui#v2.1
+https://github.com/camenduru/stable-diffusion-webui#v2.5
